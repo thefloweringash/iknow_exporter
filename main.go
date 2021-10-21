@@ -16,6 +16,7 @@ import (
 const (
 	ContentDomainLabel = "content_domain"
 	GoalIdLabel        = "goal"
+	CueLanguageLabel   = "cue_language"
 )
 
 var (
@@ -51,20 +52,35 @@ var (
 		Help: "Cumulative items that have reached checkpoint 3",
 	}, []string{ContentDomainLabel})
 
-	eligibleItemsCount = promauto.NewGaugeVec(prometheus.GaugeOpts{
+	goalEligibleItemsCount = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "iknow_goal_eligible_items_count",
 		Help: "Items that are current eligible for study",
 	}, []string{ContentDomainLabel, GoalIdLabel})
 
-	studiedItemsCount = promauto.NewGaugeVec(prometheus.GaugeOpts{
+	goalStudiedItemsCount = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "iknow_goal_studied_items_count",
 		Help: "Items that have been studied",
 	}, []string{ContentDomainLabel, GoalIdLabel})
 
-	skippedItemsCount = promauto.NewGaugeVec(prometheus.GaugeOpts{
+	goalSkippedItemsCount = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "iknow_goal_skipped_items_count",
 		Help: "Items that have been skipped",
 	}, []string{ContentDomainLabel, GoalIdLabel})
+
+	groupingEligibleItemsCount = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "iknow_grouping_eligible_items_count",
+		Help: "Items that are current eligible for study",
+	}, []string{ContentDomainLabel, CueLanguageLabel})
+
+	groupingStudiedItemsCount = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "iknow_grouping_studied_items_count",
+		Help: "Items that have been studied",
+	}, []string{ContentDomainLabel, CueLanguageLabel})
+
+	groupingSkippedItemsCount = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "iknow_grouping_skipped_items_count",
+		Help: "Items that have been skipped",
+	}, []string{ContentDomainLabel, CueLanguageLabel})
 )
 
 type IknowExporter struct {
@@ -92,10 +108,15 @@ func (i IknowExporter) Update() error {
 	}
 
 	if aggregate, err := i.Client.GetAggregateStats(); err == nil {
-		for _, goal := range aggregate {
-			eligibleItemsCount.WithLabelValues("items", strconv.Itoa(goal.GoalId)).Set(float64(goal.Items.EligibleItemsCount))
-			studiedItemsCount.WithLabelValues("items", strconv.Itoa(goal.GoalId)).Set(float64(goal.Items.StudiedItemsCount))
-			skippedItemsCount.WithLabelValues("items", strconv.Itoa(goal.GoalId)).Set(float64(goal.Items.SkippedItemsCount))
+		for _, goal := range aggregate.Goals {
+			goalEligibleItemsCount.WithLabelValues("items", strconv.Itoa(goal.GoalId)).Set(float64(goal.Items.EligibleItemsCount))
+			goalStudiedItemsCount.WithLabelValues("items", strconv.Itoa(goal.GoalId)).Set(float64(goal.Items.StudiedItemsCount))
+			goalSkippedItemsCount.WithLabelValues("items", strconv.Itoa(goal.GoalId)).Set(float64(goal.Items.SkippedItemsCount))
+		}
+		for _, grouping := range aggregate.Groupings {
+			groupingEligibleItemsCount.WithLabelValues("items", grouping.Grouping.CueLanguageCode).Set(float64(grouping.Items.EligibleItemsCount))
+			groupingStudiedItemsCount.WithLabelValues("items", grouping.Grouping.CueLanguageCode).Set(float64(grouping.Items.StudiedItemsCount))
+			groupingSkippedItemsCount.WithLabelValues("items", grouping.Grouping.CueLanguageCode).Set(float64(grouping.Items.SkippedItemsCount))
 		}
 	}
 

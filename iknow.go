@@ -54,21 +54,31 @@ func (self IknowClient) GetCumulativeStats() (CumulativeStats, error) {
 	return result, err
 }
 
-type AggregateResponse struct {
-	Goals []GoalStats `json:"goals"`
+type AggregateStats struct {
+	Goals     []GoalStats     `json:"goals"`
+	Groupings []GroupingStats `json:"groupings"`
+}
+
+type ItemStats struct {
+	EligibleItemsCount int `json:"eligible_items_count"`
+	SkippedItemsCount  int `json:"skipped_items_count"`
+	StudiedItemsCount  int `json:"studied_items_count"`
 }
 
 type GoalStats struct {
-	GoalId int `json:"goal_id"`
-	Items  struct {
-		EligibleItemsCount int `json:"eligible_items_count"`
-		SkippedItemsCount  int `json:"skipped_items_count"`
-		StudiedItemsCount  int `json:"studied_items_count"`
-	} `json:"items"`
+	GoalId int       `json:"goal_id"`
+	Items  ItemStats `json:"items"`
 }
 
-func (self IknowClient) GetAggregateStats() ([]GoalStats, error) {
-	var result AggregateResponse
+type GroupingStats struct {
+	Grouping struct {
+		CueLanguageCode string `json:"cue_language_code"`
+	} `json:"grouping"`
+	Items ItemStats `json:"items"`
+}
+
+func (self IknowClient) GetAggregateStats() (AggregateStats, error) {
+	var result AggregateStats
 	err := self.fetch("https://iknow.jp/api/v2/goals/enrolled/memories/aggregate", &result)
-	return result.Goals, err
+	return result, err
 }
