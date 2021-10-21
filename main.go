@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -14,6 +15,7 @@ import (
 
 const (
 	ContentDomainLabel = "content_domain"
+	GoalIdLabel        = "goal"
 )
 
 var (
@@ -48,6 +50,21 @@ var (
 		Name: "iknow_cumulative_items_reached_checkpoint_3",
 		Help: "Cumulative items that have reached checkpoint 3",
 	}, []string{ContentDomainLabel})
+
+	eligibleItemsCount = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "iknow_goal_eligible_items_count",
+		Help: "Items that are current eligible for study",
+	}, []string{ContentDomainLabel, GoalIdLabel})
+
+	studiedItemsCount = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "iknow_goal_studied_items_count",
+		Help: "Items that have been studied",
+	}, []string{ContentDomainLabel, GoalIdLabel})
+
+	skippedItemsCount = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "iknow_goal_skipped_items_count",
+		Help: "Items that have been skipped",
+	}, []string{ContentDomainLabel, GoalIdLabel})
 )
 
 type IknowExporter struct {
@@ -63,19 +80,23 @@ func NewExporter(secret string) IknowExporter {
 }
 
 func (i IknowExporter) Update() error {
-	stats, err := i.Client.GetCumulativeStats()
-
-	if err != nil {
-		return err
+	if stats, err := i.Client.GetCumulativeStats(); err == nil {
+		for contentDomain, s := range stats {
+			started.WithLabelValues(contentDomain).Set(float64(s.Started))
+			studyTime.WithLabelValues(contentDomain).Set(float64(s.TimeMillis))
+			logHalflifeMillis.WithLabelValues(contentDomain).Set(float64(s.TotalLogHalflifeMillis))
+			checkpoint1.WithLabelValues(contentDomain).Set(float64(s.Checkpoint1))
+			checkpoint2.WithLabelValues(contentDomain).Set(float64(s.Checkpoint2))
+			checkpoint3.WithLabelValues(contentDomain).Set(float64(s.Checkpoint3))
+		}
 	}
 
-	for contentDomain, s := range stats {
-		started.WithLabelValues(contentDomain).Set(float64(s.Started))
-		studyTime.WithLabelValues(contentDomain).Set(float64(s.TimeMillis))
-		logHalflifeMillis.WithLabelValues(contentDomain).Set(float64(s.TotalLogHalflifeMillis))
-		checkpoint1.WithLabelValues(contentDomain).Set(float64(s.Checkpoint1))
-		checkpoint2.WithLabelValues(contentDomain).Set(float64(s.Checkpoint2))
-		checkpoint3.WithLabelValues(contentDomain).Set(float64(s.Checkpoint3))
+	if aggregate, err := i.Client.GetAggregateStats(); err == nil {
+		for _, goal := range aggregate {
+			eligibleItemsCount.WithLabelValues("items", strconv.Itoa(goal.GoalId)).Set(float64(goal.Items.EligibleItemsCount))
+			studiedItemsCount.WithLabelValues("items", strconv.Itoa(goal.GoalId)).Set(float64(goal.Items.StudiedItemsCount))
+			skippedItemsCount.WithLabelValues("items", strconv.Itoa(goal.GoalId)).Set(float64(goal.Items.SkippedItemsCount))
+		}
 	}
 
 	return nil
