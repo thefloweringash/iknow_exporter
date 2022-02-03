@@ -67,6 +67,21 @@ var (
 		Help: "Items that have been skipped",
 	}, []string{ContentDomainLabel, GoalIdLabel})
 
+	goalCheckpoint1ItemsCount = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "iknow_goal_items_at_checkpoint_1",
+		Help: "Items that have reached checkpoint 1",
+	}, []string{ContentDomainLabel, GoalIdLabel})
+
+	goalCheckpoint2ItemsCount = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "iknow_goal_items_at_checkpoint_2",
+		Help: "Items that have reached checkpoint 2",
+	}, []string{ContentDomainLabel, GoalIdLabel})
+
+	goalCheckpoint3ItemsCount = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "iknow_goal_items_at_checkpoint_3",
+		Help: "Items that have reached checkpoint 3",
+	}, []string{ContentDomainLabel, GoalIdLabel})
+
 	groupingEligibleItemsCount = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "iknow_grouping_eligible_items_count",
 		Help: "Items that are current eligible for study",
@@ -80,6 +95,21 @@ var (
 	groupingSkippedItemsCount = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "iknow_grouping_skipped_items_count",
 		Help: "Items that have been skipped",
+	}, []string{ContentDomainLabel, CueLanguageLabel})
+
+	groupingCheckpoint1ItemsCount = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "iknow_grouping_items_at_checkpoint_1",
+		Help: "Items that have reached checkpoint 1",
+	}, []string{ContentDomainLabel, CueLanguageLabel})
+
+	groupingCheckpoint2ItemsCount = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "iknow_grouping_items_at_checkpoint_2",
+		Help: "Items that have reached checkpoint 2",
+	}, []string{ContentDomainLabel, CueLanguageLabel})
+
+	groupingCheckpoint3ItemsCount = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "iknow_grouping_items_at_checkpoint_3",
+		Help: "Items that have reached checkpoint 3",
 	}, []string{ContentDomainLabel, CueLanguageLabel})
 )
 
@@ -112,11 +142,17 @@ func (i IknowExporter) Update() error {
 			goalEligibleItemsCount.WithLabelValues("items", strconv.Itoa(goal.GoalId)).Set(float64(goal.Items.EligibleItemsCount))
 			goalStudiedItemsCount.WithLabelValues("items", strconv.Itoa(goal.GoalId)).Set(float64(goal.Items.StudiedItemsCount))
 			goalSkippedItemsCount.WithLabelValues("items", strconv.Itoa(goal.GoalId)).Set(float64(goal.Items.SkippedItemsCount))
+			goalCheckpoint1ItemsCount.WithLabelValues("items", strconv.Itoa(goal.GoalId)).Set(float64(goal.Items.ItemsAtCheckpoint1))
+			goalCheckpoint2ItemsCount.WithLabelValues("items", strconv.Itoa(goal.GoalId)).Set(float64(goal.Items.ItemsAtCheckpoint2))
+			goalCheckpoint3ItemsCount.WithLabelValues("items", strconv.Itoa(goal.GoalId)).Set(float64(goal.Items.ItemsAtCheckpoint3))
 		}
 		for _, grouping := range aggregate.Groupings {
 			groupingEligibleItemsCount.WithLabelValues("items", grouping.Grouping.CueLanguageCode).Set(float64(grouping.Items.EligibleItemsCount))
 			groupingStudiedItemsCount.WithLabelValues("items", grouping.Grouping.CueLanguageCode).Set(float64(grouping.Items.StudiedItemsCount))
 			groupingSkippedItemsCount.WithLabelValues("items", grouping.Grouping.CueLanguageCode).Set(float64(grouping.Items.SkippedItemsCount))
+			groupingCheckpoint1ItemsCount.WithLabelValues("items", grouping.Grouping.CueLanguageCode).Set(float64(grouping.Items.ItemsAtCheckpoint1))
+			groupingCheckpoint2ItemsCount.WithLabelValues("items", grouping.Grouping.CueLanguageCode).Set(float64(grouping.Items.ItemsAtCheckpoint2))
+			groupingCheckpoint3ItemsCount.WithLabelValues("items", grouping.Grouping.CueLanguageCode).Set(float64(grouping.Items.ItemsAtCheckpoint3))
 		}
 	}
 

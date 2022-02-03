@@ -63,6 +63,9 @@ type ItemStats struct {
 	EligibleItemsCount int `json:"eligible_items_count"`
 	SkippedItemsCount  int `json:"skipped_items_count"`
 	StudiedItemsCount  int `json:"studied_items_count"`
+	ItemsAtCheckpoint1 int `json:"items_at_checkpoint_1"`
+	ItemsAtCheckpoint2 int `json:"items_at_checkpoint_2"`
+	ItemsAtCheckpoint3 int `json:"items_at_checkpoint_3"`
 }
 
 type GoalStats struct {
